@@ -1,82 +1,86 @@
-# Install Web Server, MariDB and Multiple PHP versions on Linux
+# Install Web Server, MariaDB and Multiple PHP versions on Linux
 ## This guide is a fully detailed guide to install of several versions of PHP (php5.6, php7.4 and php8.1)
 I had installed multiple PHP version a long time ago. Thus a lots of commands might have been applied before and I may miss them. If I miss any instruction that causes issues, please put a comment, I will update.
 
 The operating system used when I implemented multiple PHP versions was Ubuntu 23.04 with the last update in May 2024
 
-Because the script I use is for Ubuntu, of course you also need to use Ubuntu (or its family) to follow this tutorial. And don't forget that Apache must also be installed. We can try checking first using command.
+## Add repository
 
+https://launchpad.net/%7Eondrej/+archive/ubuntu/php
+https://launchpad.net/~ondrej/+archive/ubuntu/apache2
 
-## How to install APACHE2
+    #sudo add-apt-repository ppa:ondrej/php
+    #sudo add-apt-repository ppa:ondrej/apache2
+    #sudo apt-get update
+    #sudo apt-get dist-upgrade
+    #sudo apt list --upgradable
+    #sudo apt install python-software-properties
+    
+## Install Multiple PHP Version (php5.6, php7.4 and php8.1)
+
+    #sudo apt-get install php7.4 php7.4-fpm php7.4-mysql php7.4-mbstring php7.4-xml php7.4-gd php7.4-curl
+    #sudo apt-get install php5.6 php5.6-fpm php5.6-mysql php5.6-mbstring php5.6-xml php5.6-gd php5.6-curl
+    #sudo apt-get install php8.1 php8.1-cli php8.1-common \
+                          php8.1-zip php8.1-gd php8.1-mbstring php8.1-tokenizer \
+                          php8.1-curl php8.1-xml php8.1-bcmath php8.1-xml \
+                          php8.1-intl php8.1-sqlite3 php8.1-mysql
+     
+  Check Version 
+
+    #php -v
+        PHP 8.1.12-1ubuntu4.3 (cli) (built: Aug 17 2023 17:37:48) (NTS)
+        Copyright (c) The PHP Group
+        Zend Engine v4.1.12, Copyright (c) Zend Technologies
+        with Zend OPcache v8.1.12-1ubuntu4.3, Copyright (c), by Zend Technologies
+
+    
+## install Web Server - APACHE2
+  Because the script I use is for Ubuntu, of course you also need to use Ubuntu (or its family) to follow this tutorial. 
+  And don't forget that Apache must also be installed. We can try checking first using command.
  
- At the end of the guide, you'll have a fully working Wiki.js instance with the following components:
- 
-     Docker
-     PostgreSQL 11 (dockerized)
-     Wiki.js 2.x (dockerized, accessible via port 80)
-     Wiki.js Update Companion (dockerized)
-     OpenSSH with UFW Firewall preconfigured for SSH, HTTP and HTTPS
+    #sudo apt install apache2
+    #sudo systemctl start apache2
+     
+  Check Version 
 
-## Update & Install Prerequisite 
+     #apache2 -v
+         Server version: Apache/2.4.55 (Ubuntu)
+         Server built:   2023-10-26T13:37:01
+  
+  
+## Install Database - MariaDB 
 
-    sudo apt -qqy update
+    #sudo apt update
+    #sudo apt install mariadb-server
+    #sudo systemctl start mariadb
+    #sudo systemctl status mariadb
+    #sudo mysql_secure_installation
+     
+  Check Version 
 
-    sudo apt install nano && sudo apt install  ufw  
+    #sudo mariadb -v
+              Welcome to the MariaDB monitor.  Commands end with ; or \g.
+              Your MariaDB connection id is 33
+              Server version: 10.11.2-MariaDB-1 Ubuntu 23.04
+    
+## Switch PHP version
 
-    sudo DEBIAN_FRONTEND=noninteractive apt-get -qqy -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade
+    #sudo update-alternatives --config php
+                There are 3 choices for the alternative php (providing /usr/bin/php).
+                
+                  Selection    Path             Priority   Status
+                ------------------------------------------------------------
+                  0            /usr/bin/php8.1   81        auto mode
+                  1            /usr/bin/php5.6   56        manual mode
+                  2            /usr/bin/php7.4   74        manual mode
+                * 3            /usr/bin/php8.1   81        manual mode
+                
+                Press <enter> to keep the current choice[*], or type selection number: 3
+   
+    #sudo systemctl restart apache2
 
-## Install Docker
-
-    sudo apt -qqy -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' install ca-certificates curl gnupg lsb-release
-
-    sudo mkdir -p /etc/apt/keyrings
-
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-    sudo apt -qqy update && sudo apt -qqy -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' install docker-ce docker-ce-cli containerd.io docker-compose-plugin
-
-## Setup Containers
-## Create internal docker network & data volume for PostgreSQL
-
-    docker network create wikinet
-
-    docker volume create pgdata
-
-    sudo mkdir -p /etc/wiki
-
-    sudo openssl rand -base64 32 > /etc/wiki/.db-secret
-
-  *Note if you get a permissions error on the above break it into two commands copy the output from the first and paste it into the file like:*
-
-    sudo openssl rand -base64 32
-
-    sudo vi /etc/wiki/.db-secret
-
-    sudo docker network create wikinet
-
-    sudo docker volume create pgdata
-
-## Create the Containers
-
-    sudo docker create --name=db -e POSTGRES_DB=wiki -e POSTGRES_USER=wiki -e POSTGRES_PASSWORD_FILE=/etc/wiki/.db-secret -v /etc/wiki/.db-secret:/etc/wiki/.db-secret:ro -v pgdata:/var/lib/postgresql/data --restart=unless-stopped -h db --network=wikinet postgres:11
-
-    sudo docker create --name=wiki -e DB_TYPE=postgres -e DB_HOST=db -e DB_PORT=5432 -e DB_PASS_FILE=/etc/wiki/.db-secret -v /etc/wiki/.db-secret:/etc/wiki/.db-secret:ro -e DB_USER=wiki -e DB_NAME=wiki -e UPGRADE_COMPANION=1 --restart=unless-stopped -h wiki --network=wikinet -p 80:3000 -p 443:3443 ghcr.io/requarks/wiki:2
-
-    sudo docker create --name=wiki-update-companion -v /var/run/docker.sock:/var/run/docker.sock:ro --restart=unless-stopped -h wiki-update-companion --network=wikinet ghcr.io/requarks/wiki-update-companion:latest
-
-## Setup Firewall
-
-    sudo ufw allow ssh
-    sudo ufw allow http
-    sudo ufw allow https
-    sudo systemctl start ufw
-    sudo ufw --force enable
-
-## Start the containers
-
-    sudo docker start db
-    sudo docker start wiki
-    sudo docker start wiki-update-companion
+  ## Restore to Normal
+    
+    #sudo a2dissite 000-default.conf
+    #sudo systemctl restart apache2
 
