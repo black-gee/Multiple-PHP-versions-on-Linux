@@ -1,2 +1,82 @@
-# Multiple-PHP-versions-on-Linux
-Installation of several versions of PHP
+# Install Web Server, MariDB and Multiple PHP versions on Linux
+## This guide is a fully detailed guide to install of several versions of PHP (php5.6, php7.4 and php8.1)
+I had installed multiple PHP version a long time ago. Thus a lots of commands might have been applied before and I may miss them. If I miss any instruction that causes issues, please put a comment, I will update.
+
+The operating system used when I implemented multiple PHP versions was Ubuntu 23.04 with the last update in May 2024
+
+Because the script I use is for Ubuntu, of course you also need to use Ubuntu (or its family) to follow this tutorial. And don't forget that Apache must also be installed. We can try checking first using command.
+
+
+## How to install APACHE2
+ 
+ At the end of the guide, you'll have a fully working Wiki.js instance with the following components:
+ 
+     Docker
+     PostgreSQL 11 (dockerized)
+     Wiki.js 2.x (dockerized, accessible via port 80)
+     Wiki.js Update Companion (dockerized)
+     OpenSSH with UFW Firewall preconfigured for SSH, HTTP and HTTPS
+
+## Update & Install Prerequisite 
+
+    sudo apt -qqy update
+
+    sudo apt install nano && sudo apt install  ufw  
+
+    sudo DEBIAN_FRONTEND=noninteractive apt-get -qqy -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' dist-upgrade
+
+## Install Docker
+
+    sudo apt -qqy -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' install ca-certificates curl gnupg lsb-release
+
+    sudo mkdir -p /etc/apt/keyrings
+
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    sudo apt -qqy update && sudo apt -qqy -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+## Setup Containers
+## Create internal docker network & data volume for PostgreSQL
+
+    docker network create wikinet
+
+    docker volume create pgdata
+
+    sudo mkdir -p /etc/wiki
+
+    sudo openssl rand -base64 32 > /etc/wiki/.db-secret
+
+  *Note if you get a permissions error on the above break it into two commands copy the output from the first and paste it into the file like:*
+
+    sudo openssl rand -base64 32
+
+    sudo vi /etc/wiki/.db-secret
+
+    sudo docker network create wikinet
+
+    sudo docker volume create pgdata
+
+## Create the Containers
+
+    sudo docker create --name=db -e POSTGRES_DB=wiki -e POSTGRES_USER=wiki -e POSTGRES_PASSWORD_FILE=/etc/wiki/.db-secret -v /etc/wiki/.db-secret:/etc/wiki/.db-secret:ro -v pgdata:/var/lib/postgresql/data --restart=unless-stopped -h db --network=wikinet postgres:11
+
+    sudo docker create --name=wiki -e DB_TYPE=postgres -e DB_HOST=db -e DB_PORT=5432 -e DB_PASS_FILE=/etc/wiki/.db-secret -v /etc/wiki/.db-secret:/etc/wiki/.db-secret:ro -e DB_USER=wiki -e DB_NAME=wiki -e UPGRADE_COMPANION=1 --restart=unless-stopped -h wiki --network=wikinet -p 80:3000 -p 443:3443 ghcr.io/requarks/wiki:2
+
+    sudo docker create --name=wiki-update-companion -v /var/run/docker.sock:/var/run/docker.sock:ro --restart=unless-stopped -h wiki-update-companion --network=wikinet ghcr.io/requarks/wiki-update-companion:latest
+
+## Setup Firewall
+
+    sudo ufw allow ssh
+    sudo ufw allow http
+    sudo ufw allow https
+    sudo systemctl start ufw
+    sudo ufw --force enable
+
+## Start the containers
+
+    sudo docker start db
+    sudo docker start wiki
+    sudo docker start wiki-update-companion
+
