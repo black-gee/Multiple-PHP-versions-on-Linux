@@ -1,8 +1,9 @@
 # Install Web Server, MariaDB and Multiple PHP versions on Linux
-## This guide is a fully detailed guide to install of several versions of PHP (php5.6, php7.4 and php8.1)
+**This guide is a fully detailed guide to install of several versions of PHP (php5.6, php7.4 and php8.1)**
 I had installed multiple PHP version a long time ago. Thus a lots of commands might have been applied before and I may miss them. If I miss any instruction that causes issues, please put a comment, I will update.
 
 The operating system used when I implemented multiple PHP versions was Ubuntu 23.04 with the last update in May 2024
+
 
 ## Add repository
 
