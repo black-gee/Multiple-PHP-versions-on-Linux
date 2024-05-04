@@ -7,9 +7,6 @@ The operating system used when I implemented multiple PHP versions was Ubuntu 23
 
 ## Add repository
 
-https://launchpad.net/%7Eondrej/+archive/ubuntu/php
-https://launchpad.net/~ondrej/+archive/ubuntu/apache2
-
     #sudo add-apt-repository ppa:ondrej/php
     #sudo add-apt-repository ppa:ondrej/apache2
     #sudo apt-get update
