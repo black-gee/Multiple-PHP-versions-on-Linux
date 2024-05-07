@@ -17,14 +17,8 @@ The operating system used when I implemented multiple PHP versions was Ubuntu 23
 ## Install Multiple PHP Version (php5.6, php7.4 and php8.1)
 
     #sudo apt-get install php5.6 php5.6-fpm php5.6-mysql php5.6-mbstring php5.6-xml php5.6-gd php5.6-curl
-    #sudo apt-get install php7.4 libapache2-mod-php7.4 php7.4-common php7.4-mysql \
-        php7.4-xml php7.4-xmlrpc php7.4-curl php7.4-gd \
-        php7.4-imagick php7.4-cli php7.4-dev php7.4-imap \
-        php7.4-mbstring php7.4-soap php7.4-zip php7.4-gd php7.4-curl -y
-    #sudo apt-get install php8.1 php8.1-cli php8.1-common \
-                          php8.1-zip php8.1-gd php8.1-mbstring php8.1-tokenizer \
-                          php8.1-curl php8.1-xml php8.1-bcmath php8.1-xml \
-                          php8.1-intl php8.1-sqlite3 php8.1-mysql
+    #sudo apt install php7.4-{fpm,mysql,common,cli,json,opcache,readline,mbstring,xml,gd,curl,zip}
+    #sudo apt install php8.1-{fpm,mysql,common,cli,opcache,readline,mbstring,xml,gd,curl,zip}
      
   Check Version 
 
