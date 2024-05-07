@@ -12,7 +12,7 @@ The operating system used when I implemented multiple PHP versions was Ubuntu 23
     #sudo apt-get update
     #sudo apt-get dist-upgrade
     #sudo apt list --upgradable
-    #sudo apt install python-software-properties
+    #sudo apt install software-properties-common
     
 ## Install Multiple PHP Version (php5.6, php7.4 and php8.1)
 
