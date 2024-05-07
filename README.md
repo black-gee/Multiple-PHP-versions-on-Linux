@@ -79,3 +79,58 @@ The operating system used when I implemented multiple PHP versions was Ubuntu 23
     #sudo a2dissite 000-default.conf
     #sudo systemctl restart apache2
 
+
+## Change PHP Version
+Make vhost.conf
+
+    # sudo nano /etc/apache2/sites-available/vhost.conf
+
+
+                    <VirtualHost *:80>
+                        ServerName example.com
+                        ServerAlias www.example.com
+                        DocumentRoot /var/www/html
+                     
+                        <Directory /var/www/html>
+                            Options -Indexes +FollowSymLinks +MultiViews
+                            AllowOverride All
+                            Require all granted
+                        </Directory>
+                     
+                        <FilesMatch \.php$>
+                            # 2.4.10+ can proxy to unix socket
+                            SetHandler "proxy:unix:/var/run/php/php7.4-fpm.sock|fcgi://localhost"
+                        </FilesMatch>
+                     
+                        ErrorLog ${APACHE_LOG_DIR}/error.log
+                        CustomLog ${APACHE_LOG_DIR}/access.log combined
+                    </VirtualHost>
+The difference between using php7.4 or php8.0 or php8.1
+
+                    PHP7.4
+                    ---------------------------------------
+                    <FilesMatch \.php$>
+                    # 2.4.10+ can proxy to unix socket
+                            SetHandler "proxy:unix:/var/run/php/php7.4-fpm.sock|fcgi://localhost"
+                    </FilesMatch>
+                    ---------------------------------------
+                    PHP8.0
+                    ---------------------------------------
+                    <FilesMatch \.php$>
+                    # 2.4.10+ can proxy to unix socket
+                            SetHandler "proxy:unix:/var/run/php/php8.0-fpm.sock|fcgi://localhost"
+                    </FilesMatch>
+                    ---------------------------------------
+                    PHP8.1
+                    ---------------------------------------
+                    <FilesMatch \.php$>
+                    # 2.4.10+ can proxy to unix socket
+                            SetHandler "proxy:unix:/var/run/php/php8.1-fpm.sock|fcgi://localhost"
+                    </FilesMatch>
+                    
+                    
+    # sudo #apachectl configtest
+    # sudo a2ensite vhost
+    # sudo nano /etc/apache2/sites-available/vhost.conf
+    # sudo systemctl restart apache2
+
